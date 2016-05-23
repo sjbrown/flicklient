@@ -39,9 +39,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'django_extensions',
-    'api',
     'client',
-    'djuser',
+    'djcelery',
+    #'kombu.transport.django',
 )
 
 MIDDLEWARE_CLASSES = (

@@ -1,0 +1,19 @@
+from python:2.7
+
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /projects
+WORKDIR /projects
+ADD requirements.txt /projects/
+
+RUN pip install Django
+RUN pip install djangorestframework
+RUN pip install psycopg2
+RUN pip install Mako
+RUN pip install ipython
+RUN pip install django-extensions
+RUN pip install -r requirements.txt
+RUN pip install django-celery
+RUN pip install -U celery
+ADD . /projects/
+
+ENV SHELL_PLUS="ipython"
