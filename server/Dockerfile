@@ -13,7 +13,9 @@ RUN pip install ipython
 RUN pip install django-extensions
 RUN pip install -r requirements.txt
 RUN pip install django-celery
+RUN pip install django-kombu
 RUN pip install -U celery
+RUN pip install requests
 ADD . /projects/
 
 ENV SHELL_PLUS="ipython"
