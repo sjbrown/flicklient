@@ -3,7 +3,8 @@ db:
 
 web:
   build: .
-  command: /bin/bash -c "sleep 5 && python manage.py runserver 0.0.0.0:8081"
+  #command: /bin/bash -c "sleep 2 && python manage.py runserver_plus 0.0.0.0:8081"
+  command: /bin/bash -c "sleep 2 && python manage.py runserver 0.0.0.0:8081"
   volumes:
      # HOST : CONTAINER [: access mode]
     - .:/projects
@@ -16,7 +17,7 @@ web:
 
 celery:
   build: .
-  command: /bin/bash -c "sleep 5 && python manage.py celery -A client.tasks worker --loglevel=info"
+  command: /bin/bash -c "sleep 2 && python manage.py celery -A client.tasks worker --loglevel=info"
   volumes:
      # HOST : CONTAINER [: access mode]
     - .:/projects
