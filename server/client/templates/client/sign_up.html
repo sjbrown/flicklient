@@ -1,0 +1,9 @@
+<h1>Sign Up</h1>
+
+<form action="/client/sign_up/" method="post">
+    {% csrf_token %}
+    <table>
+    {{ form }}
+    </table>
+<input type="submit" value="Sign up" />
+</form>

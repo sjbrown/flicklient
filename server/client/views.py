@@ -1,10 +1,13 @@
 # client.views
 
+from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template import RequestContext, loader
 from django.core.urlresolvers import reverse
 from django.template.context_processors import csrf
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import authenticate, login, logout
 
 import mako
 from mako.template import Template
@@ -17,6 +20,7 @@ mplates = TemplateLookup(directories=['client/templates/client'])
 
 def index(request):
     print '----index'
+    print '----rq u', request.user
 
     prs = PhotoRaw.objects.order_by("_created")
     photos = []
@@ -26,10 +30,56 @@ def index(request):
         photos.append(photo)
 
     return makoify(request, 'index', **{
-        'user': {'a':12},
-        'pics': [photos[0].media, photos[1].media,],
-        'metadata': [photos[0].metadata, photos[1].metadata],
+        'user': request.user,
+        'photos': photos,
     })
+
+
+def sign_up(request):
+    if request.user.is_authenticated():
+        return HttpResponseRedirect(reverse('client:index'))
+
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            user = authenticate(username=form.cleaned_data.get('username'),
+                                password=form.cleaned_data.get('password1'))
+            login(request, user)
+            return HttpResponseRedirect(reverse('client:index'))
+
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'client/sign_up.html',
+                  context = { 'form': form, })
+
+def log_out(request):
+    logout(request)
+    return HttpResponseRedirect(reverse('client:index'))
+
+def log_in(request):
+    if request.user.is_authenticated():
+        return HttpResponseRedirect(reverse('client:index'))
+
+    if request.method == 'POST':
+        print 'HERE'
+        form = AuthenticationForm(request, request.POST)
+        if form.is_valid():
+            print 'valid log in'
+            print 'uname', form.cleaned_data.get('username')
+            print 'pword', form.cleaned_data.get('password')
+            user = authenticate(username=form.cleaned_data.get('username'),
+                                password=form.cleaned_data.get('password'))
+            login(request, user)
+            return HttpResponseRedirect(reverse('client:index'))
+        print 'NOT valid log in'
+
+    else:
+        form = AuthenticationForm()
+
+    return render(request, 'client/log_in.html',
+                  context = { 'form': form, })
 
 
 def make_url(name, *args, **kwargs):
