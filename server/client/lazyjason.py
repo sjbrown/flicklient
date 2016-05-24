@@ -1,4 +1,8 @@
 # client.lazyjason
+"""
+This is a little helper I use while doing rapid development to avoid
+creating a lot of migrations.
+"""
 
 import json
 

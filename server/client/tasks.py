@@ -19,13 +19,20 @@ app.conf.update(
      CELERY_RESULT_SERIALIZER = 'json',
 )
 
+
 def populate(photo_dicts):
     # They've gone through their lives as both JSON and Python dicts,
-    # so now we trust them enough to store in the database
+    # so do a little more validation and store them in the database
     for d in photo_dicts:
         try:
+            # One last validation: check for d['media']['m']
+            d['media']['m'] # Throws KeyError if it doesn't exist
+
             pr = PhotoRaw(text=json.dumps(d), link=d['link'])
+
+            # This will throw an exception if the link isn't unique
             pr.save()
+
         except Exception as e:
             # Probably not unique
             logging.exception(e)
@@ -34,7 +41,6 @@ def populate(photo_dicts):
 @app.task
 def download_feed():
     photo_dicts = {}
-    print 'called download_feed'
 
     response = requests.get(FLICKR_URL)
 
@@ -42,14 +48,14 @@ def download_feed():
         photo_dicts = flickr_json_feed.response_to_photo_dicts(response)
         populate(photo_dicts)
         PhotoRaw.expire_old()
-        #print photo_dicts[0]
         countdown = 60
+
     except (Exception, KeyError) as e:
         logging.exception(e)
-        print "Failed that one.  See /tmp/fail.txt"
-        fail_file = file('/tmp/fail.txt', 'w')
-        fail_file.write(response.text.encode('utf-8'))
-        fail_file.close()
+        #print "Failed that one.  See /tmp/fail.txt"
+        #fail_file = file('/tmp/fail.txt', 'w')
+        #fail_file.write(response.text.encode('utf-8'))
+        #fail_file.close()
         countdown = 5
 
     download_feed.apply_async(
