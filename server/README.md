@@ -6,14 +6,16 @@
 
 ## Build the project:
 
+Open a terminal in this directory.
+
 `docker-compose build`
 
-Open a terminal in this directory.
+Then:
 
 `docker-compose up db`
 
 Running this it will not start the web server, but that's fine.
-Just Ctrl-C it when it's done initializing.
+Just Ctrl-C it when it's done initializing (after 20 seconds or so).
 This first time is just to create the db container and get it ready for the migrate
 command:
 
