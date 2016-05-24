@@ -17,24 +17,19 @@ import mako
 from mako.template import Template
 from mako.lookup import TemplateLookup
 
-from client.models import PhotoRaw, Photo
+from client.models import FeedPhoto, Photo
 
 
 mplates = TemplateLookup(directories=['client/templates/client'])
 
-def _date_to_str(date):
-    return date.isoformat()
-
-def _str_to_date(dstr):
-    return datetime.strptime(dstr, "%Y-%m-%dT%H:%M:%S.%f")
 
 def index(request):
 
     if 'last_seen' in request.session and 'startover' not in request.GET:
         only_show_after = _str_to_date(request.session['last_seen'])
-        prs = PhotoRaw.objects.filter(_created__gt=only_show_after).order_by("_created")
+        prs = FeedPhoto.objects.filter(_created__gt=only_show_after).order_by("_created")
     else:
-        prs = PhotoRaw.objects.order_by("_created")
+        prs = FeedPhoto.objects.order_by("_created")
 
     photos = []
     for pr in prs[:3]:
@@ -66,6 +61,68 @@ def index(request):
         'messages': messages.get_messages(request),
     })
 
+
+@login_required
+def show_faves(request):
+    faves = request.user.photo_set.order_by('_created')
+    photos = faves
+    faves = [x.link for x in faves]
+
+    return makoify(request, 'index', **{
+        'user': request.user,
+        'photos': photos,
+        'faves': faves,
+        'at_the_end': True,
+        'messages': messages.get_messages(request),
+    })
+
+
+@login_required
+def favourite(request):
+    def validate(link_input):
+        # TODO: do real validation
+        return link_input
+
+    if request.method == 'POST':
+        link = validate(request.POST['link'])
+
+        try:
+            pr = FeedPhoto.objects.get(link=link)
+            photo = Photo()
+            photo.from_raw(pr)
+            photo.owner = request.user
+            photo.save()
+            messages.info(request, 'Added Favourite.')
+
+        except FeedPhoto.DoesNotExist:
+            messages.error(request, 'Expired FeedPhoto.')
+
+    return HttpResponseRedirect(reverse('client:index'))
+
+
+@login_required
+def unfavourite(request):
+    def validate(link_input):
+        # TODO: do real validation
+        return link_input
+
+    if request.method == 'POST':
+        link = validate(request.POST['link'])
+
+        try:
+            faves = request.user.photo_set.all()
+            for fave in faves:
+                if fave.link == link:
+                    fave.delete()
+            messages.info(request, 'Removed Favourite.')
+
+        except FeedPhoto.DoesNotExist:
+            messages.error(request, 'Expired FeedPhoto.')
+
+    return HttpResponseRedirect(reverse('client:index'))
+
+
+# -- user login / registration functions -------------------------------------
 
 def sign_up(request):
     if request.user.is_authenticated():
@@ -109,69 +166,14 @@ def log_in(request):
                   context = { 'form': form, })
 
 
+# -- helper functions --------------------------------------
 
+def _date_to_str(date):
+    return date.isoformat()
 
-@login_required
-def favourite(request):
-    def validate(link_input):
-        # TODO: do real validation
-        return link_input
+def _str_to_date(dstr):
+    return datetime.strptime(dstr, "%Y-%m-%dT%H:%M:%S.%f")
 
-    if request.method == 'POST':
-        link = validate(request.POST['link'])
-
-        try:
-            pr = PhotoRaw.objects.get(link=link)
-            photo = Photo()
-            photo.from_raw(pr)
-            photo.owner = request.user
-            photo.save()
-            messages.info(request, 'Added Favourite.')
-
-        except PhotoRaw.DoesNotExist:
-            messages.error(request, 'Expired PhotoRaw.')
-
-    return HttpResponseRedirect(reverse('client:index'))
-
-
-@login_required
-def unfavourite(request):
-    def validate(link_input):
-        # TODO: do real validation
-        return link_input
-
-    if request.method == 'POST':
-        link = validate(request.POST['link'])
-
-        try:
-            faves = request.user.photo_set.all()
-            for fave in faves:
-                if fave.link == link:
-                    fave.delete()
-            messages.info(request, 'Removed Favourite.')
-
-        except PhotoRaw.DoesNotExist:
-            messages.error(request, 'Expired PhotoRaw.')
-
-    return HttpResponseRedirect(reverse('client:index'))
-
-
-@login_required
-def show_faves(request):
-    faves = request.user.photo_set.order_by('_created')
-    photos = faves
-    faves = [x.link for x in faves]
-
-    return makoify(request, 'index', **{
-        'user': request.user,
-        'photos': photos,
-        'faves': faves,
-        'at_the_end': True,
-        'messages': messages.get_messages(request),
-    })
-
-
-# -- helper functions
 
 def make_url(name, *args, **kwargs):
     return reverse(name, args=args, kwargs=kwargs)
@@ -192,6 +194,5 @@ def makoify(request, template_prefix, **kw):
     except:
         result = mako.exceptions.html_error_template().render()
     return HttpResponse(result)
-
 
 

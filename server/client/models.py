@@ -53,10 +53,10 @@ class Photo(models.Model, LazyJason):
     def from_raw(self, photo_raw):
         """
         Populate my attributes.
-        photo_raw is an instance of a PhotoRaw.
+        photo_raw is an instance of a FeedPhoto.
         """
-        self.raw_text = photo_raw.text
-        # We trust that data in PhotoRaw has made the journey through the
+
+        # We trust that data in FeedPhoto has made the journey through the
         # flickr_json_feed functions, so it's safe to do json.loads()
         self.link = photo_raw.link
         d = json.loads(photo_raw.text)
@@ -76,11 +76,11 @@ class Photo(models.Model, LazyJason):
         return mdata
 
 
-class PhotoRaw(models.Model):
+class FeedPhoto(models.Model):
     """
     This is just the "raw" JSON of photo items from the Flickr stream
 
-    While Photo and PhotoRaw classes could be merged together, I'm keeping
+    While Photo and FeedPhoto classes could be merged together, I'm keeping
     this separate from the Photo class, because the next feature I think the
     project should have is to change this into a Redis backend, and let
     Redis handle the expiry of old records automatically.
@@ -91,7 +91,7 @@ class PhotoRaw(models.Model):
 
     @classmethod
     def expire_old(cls):
-        PhotoRaw.objects.filter(_created__lte =
+        FeedPhoto.objects.filter(_created__lte =
             timezone.now() - EXPIRY_AGE
             ).delete()
 

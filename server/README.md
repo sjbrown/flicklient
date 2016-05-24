@@ -1,7 +1,5 @@
 # Instructions
 
-(from https://docs.docker.com/compose/django/)
-
 ## Install Docker
 ## Install docker-compose
 
@@ -12,9 +10,16 @@
 
 Open a terminal in this directory.
 
+`docker-compose up db`
+
+Running this it will not start the web server, but that's fine.
+Just Ctrl-C it when it's done initializing.
+This first time is just to create the db container and get it ready for the migrate
+command:
+
 `docker-compose run --rm web python manage.py migrate`
 
-This creates the databases.
+This creates the databases. (Sometimes this command fails the first time)
 
 Change the permissions to `.` so that you own everything: `sudo chown -R $USER .`
 
