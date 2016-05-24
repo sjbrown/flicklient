@@ -1,5 +1,7 @@
 # client.views
 
+from datetime import datetime
+
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404
@@ -20,24 +22,47 @@ from client.models import PhotoRaw, Photo
 
 mplates = TemplateLookup(directories=['client/templates/client'])
 
+def _date_to_str(date):
+    return date.isoformat()
+
+def _str_to_date(dstr):
+    return datetime.strptime(dstr, "%Y-%m-%dT%H:%M:%S.%f")
+
 def index(request):
 
-    prs = PhotoRaw.objects.order_by("_created")
+    if 'last_seen' in request.session and 'startover' not in request.GET:
+        only_show_after = _str_to_date(request.session['last_seen'])
+        prs = PhotoRaw.objects.filter(_created__gt=only_show_after).order_by("_created")
+    else:
+        prs = PhotoRaw.objects.order_by("_created")
+
     photos = []
-    for pr in prs:
+    for pr in prs[:3]:
         photo = Photo()
         photo.from_raw(pr)
         photos.append(photo)
 
+    # We need to keep track of the last we've seen and whether we should
+    # show the "Next..." link at the bottom of the HTML page
+    at_the_end = False
+    if photos:
+        # pr is the last one from falling off the above loop
+        request.session['last_seen'] = _date_to_str(pr._created)
+        if pr == prs.last():
+            at_the_end = True
+        else:
+            at_the_end = False
+
     faves = []
     if request.user.is_authenticated():
-        faves = request.user.photo_set.order_by('_created')[:50]
+        faves = request.user.photo_set.order_by('_created').reverse()[:50]
         faves = [x.link for x in faves]
 
     return makoify(request, 'index', **{
         'user': request.user,
         'photos': photos,
         'faves': faves,
+        'at_the_end': at_the_end,
         'messages': messages.get_messages(request),
     })
 
@@ -72,14 +97,10 @@ def log_in(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, request.POST)
         if form.is_valid():
-            print 'valid log in'
-            print 'uname', form.cleaned_data.get('username')
-            print 'pword', form.cleaned_data.get('password')
             user = authenticate(username=form.cleaned_data.get('username'),
                                 password=form.cleaned_data.get('password'))
             login(request, user)
             return HttpResponseRedirect(reverse('client:index'))
-        print 'NOT valid log in'
 
     else:
         form = AuthenticationForm()
@@ -98,11 +119,9 @@ def favourite(request):
 
     if request.method == 'POST':
         link = validate(request.POST['link'])
-        print 'Link is', link
 
         try:
             pr = PhotoRaw.objects.get(link=link)
-            print 'pr is', pr
             photo = Photo()
             photo.from_raw(pr)
             photo.owner = request.user
@@ -147,6 +166,7 @@ def show_faves(request):
         'user': request.user,
         'photos': photos,
         'faves': faves,
+        'at_the_end': True,
         'messages': messages.get_messages(request),
     })
 

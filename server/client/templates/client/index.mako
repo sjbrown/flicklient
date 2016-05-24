@@ -2,7 +2,7 @@
 <tbody>
 <tr>
 <td>
-    <h1><a href="/client/">Flicklient!</a></h1>
+    <h1><a href="/client/?startover=1">Flicklient!</a></h1>
 </td>
 <td>
     <ul>
@@ -76,3 +76,9 @@
 
 </tbody>
 </table>
+
+% if not at_the_end:
+    <a href="?next=1">Next ...</a>
+% else:
+    Click the Flicklient title to start over
+% endif
