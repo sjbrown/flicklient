@@ -43,7 +43,7 @@ class LazyJason(object):
         else:
             # We may have added some items to _lazy_defaults since last save
             dba = json.loads(self.db_attrs)
-            print 'non default dba', dba
+            #print 'non default dba', dba
             for key,val in self._lazy_defaults.items():
                 if key not in dba:
                     print 'key %s was not in dba' % key
@@ -77,7 +77,7 @@ class LazyJason(object):
             if isinstance(val, list) and val and isinstance(val[0], LazyJason):
                 print 'jdict values should be stringed ids of model objects'
                 val = [str(x.id) for x in val]
-            print 'a:v', {attrname:val}
+            #print 'a:v', {attrname:val}
             return self.lazy_set(**{attrname:val})
         return super(LazyJason, self).__setattr__(attrname, val)
 
