@@ -1,13 +1,28 @@
-<h1>Flicklient!</h1>
-<ul>
-    % if user.is_authenticated():
-        <li>You are user ${ user }</li>
-        <li><a href="/client/log_out">Log out</a></li>
-    % else:
-        <li><a href="/client/sign_up">Sign up</a></li>
-        <li><a href="/client/log_in">Log in</a></li>
-    % endif
-</ul>
+<table>
+<tbody>
+<tr>
+<td>
+    <h1><a href="/client/">Flicklient!</a></h1>
+</td>
+<td>
+    <ul>
+        % if user.is_authenticated():
+            <li>You are user ${ user }</li>
+            <li><a href="/client/log_out">Log out</a></li>
+            <li><a href="/client/show_faves">See my favourites</a></li>
+        % else:
+            <li><a href="/client/sign_up">Sign up</a></li>
+            <li><a href="/client/log_in">Log in</a></li>
+        % endif
+    </ul>
+</td>
+</tr>
+</tbody>
+</table>
+
+% for message in messages:
+    <span style="color:red">${ message }</span>
+% endfor
 
 <table border="1">
 <tbody>
@@ -17,7 +32,24 @@
     <tr>
     <td>
     % if user.is_authenticated():
-        <a>Favourite</a>
+
+        % if photo.metadata['link'] in faves:
+            <b>:)</b>
+            <form method="post" action="/client/unfavourite">
+                ${ csrf }
+                <input type="hidden"
+                       name="link" value="${ photo.metadata['link'] }" />
+                <input type="submit" value="Unfavourite" />
+            </form>
+        % else:
+            <form method="post" action="/client/favourite">
+                ${ csrf }
+                <input type="hidden"
+                       name="link" value="${ photo.metadata['link'] }" />
+                <input type="submit" value="Favourite" />
+            </form>
+        % endif
+
     % else:
         <i>Log in to mark your favourites</i>
     % endif

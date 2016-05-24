@@ -7,6 +7,8 @@ import functools
 import logging
 
 from django.db import models
+from django.contrib.auth.models import User
+
 from django.utils import timezone
 from django_extensions.db.fields import CreationDateTimeField
 from django.db.models.signals import post_init, pre_save, post_save
@@ -32,6 +34,8 @@ def defang_user_input(s):
 
 class Photo(models.Model, LazyJason):
     _created = CreationDateTimeField()
+    owner = models.ForeignKey(User)
+
     db_attrs = models.CharField(default='{}', max_length=100*1024)
     _lazy_defaults = dict(
         title = "",
@@ -51,6 +55,7 @@ class Photo(models.Model, LazyJason):
         Populate my attributes.
         photo_raw is an instance of a PhotoRaw.
         """
+        self.raw_text = photo_raw.text
         # We trust that data in PhotoRaw has made the journey through the
         # flickr_json_feed functions, so it's safe to do json.loads()
         self.link = photo_raw.link
