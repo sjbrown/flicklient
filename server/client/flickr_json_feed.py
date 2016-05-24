@@ -1,3 +1,11 @@
+"""
+flickr_json_feed.py
+
+This provides functions to take HTTP responses from the Flickr feed and
+turn them into data structures suitable for our purposes, while doing
+some input validation.
+"""
+
 import json
 
 def raw_to_json_payload(raw_flickr_text):
@@ -35,7 +43,7 @@ def response_to_photo_dicts(response):
         raise Exception('You gave me a not-OK response. Can not parse.')
     j = raw_to_json_payload(response.text)
     d = json_to_dict(j)
-    
+
     # The dict contains some metadata about itself, what we really want
     # is the stuff under the "items" key
     return d['items']
